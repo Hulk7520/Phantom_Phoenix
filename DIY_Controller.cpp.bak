@@ -381,7 +381,7 @@ void DIYXBeeController::ControlInput(void)
         
 
       //Leg lift height - Right slider has value 0-255 translate to 30-93
-      g_InControlState.LegLiftHeight = 50 + g_diyp.s.bRSlider/3;//Zenta trying 3 instead of 4, and +50 instead of +30
+      g_InControlState.LegLiftHeight = 30 + g_diyp.s.bRSlider/3;//Zenta trying 3 instead of 4
 
       //---------------------------------------------------------------------------------------------------
       //Walk mode   
@@ -498,9 +498,9 @@ void DIYXBeeController::ControlInput(void)
       //Single Leg Mode
       //---------------------------------------------------------------------------------------------------
       if (bXBeeControlMode == SINGLELEGMODE)  {
-        g_InControlState.SLLeg.x = SmoothControl(((g_diyp.s.bRJoyLR-128)*2), g_InControlState.SLLeg.x , SmDiv);//;
+        g_InControlState.SLLeg.x = SmoothControl(((g_diyp.s.bRJoyLR-128)), g_InControlState.SLLeg.x , SmDiv);//;
         g_InControlState.SLLeg.z = SmoothControl((-(g_diyp.s.bRJoyUD-128)), g_InControlState.SLLeg.z , SmDiv);//;
-        g_InControlState.SLLeg.y = SmoothControl((-(g_diyp.s.bLJoyUD-128)*2), g_InControlState.SLLeg.y , SmDiv);//Need to check packetsize..
+        g_InControlState.SLLeg.y = SmoothControl((-(g_diyp.s.bLJoyUD-128)), g_InControlState.SLLeg.y , SmDiv);//Need to check packetsize..
         g_InControlState.InputTimeDelay = 128 -  max( max( abs(g_diyp.s.bRJoyLR-128),  abs(g_diyp.s.bRJoyUD-128)),  abs(g_diyp.s.bLJoyLR-128)) + (128 -(g_diyp.s.bLSlider)/2);
       }
 
