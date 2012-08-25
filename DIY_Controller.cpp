@@ -350,7 +350,13 @@ void DIYXBeeController::ControlInput(void)
           XBeeOutputStringF((const __FlashStringHelper *)pgm_read_word(&s_asGateNames[g_InControlState.GaitType]));
         }
       }
-
+      //Test
+      if ((bXBeeControlMode==WALKMODE) && (iNumButton==8)){
+        g_ServoDriver.TorqueCtrl();
+      
+      }
+      
+      
       //Switch single leg
       if (bXBeeControlMode==SINGLELEGMODE) {
         if (iNumButton>=1 && iNumButton<=6) {

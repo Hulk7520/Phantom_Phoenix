@@ -228,6 +228,17 @@ long            IKFeetPosZ;        //Input Position of the Feet Z
 boolean         IKSolution;        //Output true if the solution is possible
 boolean         IKSolutionWarning;    //Output true if the solution is NEARLY possible
 boolean         IKSolutionError;    //Output true if the solution is NOT possible
+
+//Leg Forward Kinematics (from Xan/PEP)
+int            FKFeetPosX;	//Output position of the Feet X
+int            FKFeetPosY;	//Output position of the Feet Y
+int            FKFeetPosZ;	//Output Position of the Feet Z
+
+//Debug:
+int Xcoord;
+int Ycoord;
+int Zcoord;
+
 //--------------------------------------------------------------------
 //[TIMING]
 unsigned long   lTimerStart;    //Start time of the calculation cycles
@@ -513,6 +524,13 @@ void loop(void)
     LegIK (LegPosX[LegIndex]+g_InControlState.BodyPos.x-BodyFKPosX+GaitPosX[LegIndex] - TotalTransX,
     LegPosY[LegIndex]+g_InControlState.BodyPos.y-BodyFKPosY+GaitPosY[LegIndex] - TotalTransY,
     LegPosZ[LegIndex]+g_InControlState.BodyPos.z-BodyFKPosZ+GaitPosZ[LegIndex] - TotalTransZ, LegIndex);
+#ifdef DEBUG
+    if (LegIndex == cLF){
+      Xcoord = (LegPosX[LegIndex]+g_InControlState.BodyPos.x-BodyFKPosX+GaitPosX[LegIndex] - TotalTransX);
+      Ycoord = (LegPosY[LegIndex]+g_InControlState.BodyPos.y-BodyFKPosY+GaitPosY[LegIndex] - TotalTransY);
+      Zcoord = (LegPosZ[LegIndex]+g_InControlState.BodyPos.z-BodyFKPosZ+GaitPosZ[LegIndex] - TotalTransZ);
+    }
+#endif
   }
 #ifdef OPT_WALK_UPSIDE_DOWN
   if (fRobotUpsideDown){ //Need to set them back for not messing with the SmoothControl
@@ -620,12 +638,26 @@ void loop(void)
     }
 #ifdef DEBUG
     if (g_fDebugOutput) {
-
-
-      DBGSerial.print("TY:");
-      DBGSerial.print(TotalYBal1,DEC); 
-      DBGSerial.print(" LFZ:");
-      DBGSerial.println(LegPosZ[cLF],DEC);
+      delay(100);
+      LegFK (cLF);
+      DBGSerial.print("CFT:");
+      DBGSerial.print(CoxaAngle1[cLF],DEC);
+      DBGSerial.print(",");
+      DBGSerial.print(FemurAngle1[cLF],DEC);
+      DBGSerial.print(",");
+      DBGSerial.print(TibiaAngle1[cLF],DEC); 
+      DBGSerial.print(" XYZ:");
+      DBGSerial.print(FKFeetPosX,DEC);
+      DBGSerial.print(",");
+      DBGSerial.print(FKFeetPosY,DEC);
+      DBGSerial.print(",");
+      DBGSerial.println(FKFeetPosZ,DEC);
+      DBGSerial.print("Ctrl XYZ:");
+      DBGSerial.print(Xcoord,DEC);
+      DBGSerial.print(",");
+      DBGSerial.print(Ycoord,DEC);
+      DBGSerial.print(",");
+      DBGSerial.println(Zcoord,DEC);
       DBGSerial.flush();  // see if forcing it to output helps...
     }
 #endif
@@ -1248,7 +1280,7 @@ void BodyFK (short PosX, short PosZ, short PosY, short RotationY, byte BodyIKLeg
   short            CosB4;          //Cos buffer for BodyRotX calculations
   short            SinG4;          //Sin buffer for BodyRotZ calculations
   short            CosG4;          //Cos buffer for BodyRotZ calculations
-  short             CPR_X;            //Final X value for centerpoint of rotation
+  short            CPR_X;            //Final X value for centerpoint of rotation
   short            CPR_Y;            //Final Y value for centerpoint of rotation
   short            CPR_Z;            //Final Z value for centerpoint of rotation
 
@@ -1294,7 +1326,60 @@ void BodyFK (short PosX, short PosZ, short PosY, short RotationY, byte BodyIKLeg
 
 }  
 
+//-------------------------------------------------------------------
+//[LEG Forward Kinematics] Calculates the position of the Tars corresponding to the given angles
+//FKFeetPosX	Output position of the Feet X
+//FKFeetPosY	Output position of the Feet Y
+//FKFeetPosZ	Output Position of the Feet Z
+// ! NO 4 DOF support so far !
+//--------------------------------------------------------------------
+void LegFK (byte LegFKLegNr)
+{
+  long           FKCT2;	        //Length between Coxa and Tars, decimals = 2
+  short          FKSinC4;        //Sin coxa angle, decimals = 4	
+  short          FKCosC4;        //Cos coxa angle, deciamls = 4
+  short          FKSinF4;	//Sin femur angle, decimals = 4
+  short          FKCosF4;	//Cos femur angle, decimals = 4
+  short          FKSinT4;        //Sin tibia angle, decimals = 4	
+  short          FKCosT4;	//Cos tibia angle, deciamls = 4
+  //Coxa angle
+  GetSinCos(CoxaAngle1[LegFKLegNr]-(short)pgm_read_word(&cCoxaAngle1[LegFKLegNr]));
+  FKSinC4 = sin4;
+  FKCosC4 = cos4;  
 
+  //Femur angle
+#ifdef OPT_WALK_UPSIDE_DOWN
+  if (fRobotUpsideDown)
+    GetSinCos(FemurAngle1[LegFKLegNr]+900);
+  else
+    GetSinCos(-FemurAngle1[LegFKLegNr]+900);
+#else  
+  GetSinCos(-FemurAngle1[LegFKLegNr]+900);
+#endif
+  FKSinF4 = sin4;
+  FKCosF4 = cos4;
+  
+  //Tibia angle
+#ifdef OPT_WALK_UPSIDE_DOWN
+  if (fRobotUpsideDown)
+    GetSinCos(FemurAngle1[LegFKLegNr] - TibiaAngle1[LegFKLegNr] + 900);
+  else
+    GetSinCos(-FemurAngle1[LegFKLegNr] + TibiaAngle1[LegFKLegNr] + 900);
+#else  
+  GetSinCos(-FemurAngle1[LegFKLegNr] + TibiaAngle1[LegFKLegNr]);
+#endif  
+  FKSinT4 = sin4;
+  FKCosT4 = cos4;
+  
+  //Distance between coxa and tars
+  FKCT2 = ((long)(byte)pgm_read_byte(&cCoxaLength[LegFKLegNr])) + (((long)FKSinF4*(byte)pgm_read_byte(&cFemurLength[LegFKLegNr])) + ((long)FKSinT4*(byte)pgm_read_byte(&cTibiaLength[LegFKLegNr])))/c4DEC;
+  
+  //Position of the tars
+  FKFeetPosX = ((long)FKCosC4*FKCT2)/c4DEC;  
+  FKFeetPosY = (((long)FKCosF4*(byte)pgm_read_byte(&cFemurLength[LegFKLegNr])) + ((long)FKCosT4*(byte)pgm_read_byte(&cTibiaLength[LegFKLegNr])))/c4DEC;
+  FKFeetPosZ = ((long)FKSinC4*FKCT2)/c4DEC;
+
+}
 
 //--------------------------------------------------------------------
 //[LEG INVERSE KINEMATICS] Calculates the angles of the coxa, femur and tibia for the given position of the feet

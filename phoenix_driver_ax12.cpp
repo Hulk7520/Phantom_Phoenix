@@ -310,6 +310,15 @@ word CalculateAX12MoveSpeed(word wCurPos, word wGoalPos, word wTime)
   return wSpeed;
 } 
 #endif
+//Test
+void ServoDriver::TorqueCtrl(void){
+  g_InputController.AllowControllerInterrupts(false);    // If on xbee on hserial tell hserial to not processess...
+  for (byte i = 0; i < NUMSERVOS; i++) {
+    ax12SetRegister2(pgm_read_byte(&cPinTable[i]), AX_TORQUE_LIMIT_L, 200);
+    delay(25);//This is needed to making sure every servos get it..?      
+  }
+  g_InputController.AllowControllerInterrupts(true); 
+}
 
 
 //--------------------------------------------------------------------

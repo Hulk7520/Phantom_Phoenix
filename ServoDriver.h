@@ -39,6 +39,9 @@ class ServoDriver {
     void CommitServoDriver(word wMoveTime);
     void FreeServos(void);
     
+    //Test
+    void TorqueCtrl(void);
+    
     // Allow for background process to happen...
     void BackgroundProcess(void);
     
