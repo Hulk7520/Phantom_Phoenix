@@ -50,6 +50,7 @@
 #ifdef DBGSerial
 #define OPT_TERMINAL_MONITOR  
 //#define OPT_FIND_SERVO_OFFSETS    // Only useful if terminal monitor is enabled
+#define OPT_PYPOSE
 #endif
 
 #define DEBUG_IOPINS
@@ -64,7 +65,7 @@
 
 // Also define that we are using the AX12 driver
 #define USE_AX12_DRIVER
-
+#define OPT_BACKGROUND_PROCESS    // The AX12 has a background process
 //==================================================================================================================================
 //==================================================================================================================================
 //==================================================================================================================================
